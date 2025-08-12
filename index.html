@@ -1,0 +1,445 @@
+ 
+ ```html
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RecyMap</title>
+  <style>
+    :root{
+      --blue:#0b74de;
+      --green:#0b874e;
+      --card:#ffffff;
+      --bg:#f6f8fb;
+      --glass: rgba(255,255,255,0.86);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:#0b2433}
+    /* yapraklı arka plan */
+    body{
+      background-color:var(--bg);
+      background-image: url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80");
+      background-size:cover;
+      background-position:center;
+      background-attachment:fixed;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* header */
+    header{
+      position:sticky; top:0; z-index:50;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:16px; padding:14px 20px;
+      background:var(--glass); backdrop-filter: blur(6px);
+      box-shadow: 0 4px 18px rgba(2,8,23,0.08);
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    /* logo (SVG inline) */
+    .logo{
+      width:56px; height:56px; border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,var(--green), #34c37a);
+      color:#fff; flex-shrink:0;
+      box-shadow:0 8px 20px rgba(11,116,222,0.08);
+    }
+    .brand-text{line-height:1}
+    .brand-text strong{display:block;font-size:1.05rem}
+    .brand-text small{color:#234;opacity:0.8}
+
+    /* nav - only these become blue on hover */
+    nav a{margin-left:16px;text-decoration:none;color:#1f2b32;padding:8px;border-radius:8px;transition:color .15s}
+    nav a:hover{color:var(--blue)}
+
+    /* container */
+    .container{max-width:1100px;margin:28px auto;padding:0 18px}
+
+    /* grid of 4 */
+    .grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .card{
+      background:var(--card);border-radius:12px;padding:16px;min-height:220px;
+      display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 12px 28px rgba(2,10,23,0.06);
+      overflow:hidden;
+    }
+    .card .img{height:130px;border-radius:8px;background-size:cover;background-position:center}
+    .card h3{margin:12px 0 6px;font-size:1.05rem}
+    .card p{margin:0 0 12px;color:#344}
+
+    .btn{
+      display:inline-block;padding:8px 12px;border-radius:8px;background:linear-gradient(90deg,var(--green),#2fb06b);
+      color:#fff;text-decoration:none;font-weight:700;border:none;cursor:pointer;
+    }
+
+    /* join banner */
+    .join{
+      margin-top:18px;background:rgba(255,255,255,0.95);padding:14px;border-radius:12px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 10px 24px rgba(2,8,23,0.06);
+    }
+    .join .cta{font-weight:700;color:#123b2b}
+    .join .join-btn{padding:10px 14px;border-radius:10px;background:var(--blue);color:#fff;border:none;cursor:pointer;font-weight:700}
+
+    /* footer */
+    footer{max-width:1100px;margin:28px auto;padding:12px;background:rgba(0,0,0,0.45);color:#fff;text-align:center;border-radius:10px}
+
+    /* CSS-only modal (using :target) */
+    .modal-overlay{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background: rgba(0,0,0,0.55); z-index:200; padding:20px;
+    }
+    .modal{
+      width:100%; max-width:820px; background:#fff; border-radius:12px; padding:18px; box-shadow:0 22px 48px rgba(2,8,23,0.35);
+      max-height:90vh; overflow:auto; position:relative;
+    }
+    /* show when targeted */
+    .modal-overlay:target{ display:flex; }
+
+    .modal .close{
+      position:absolute; right:14px; top:12px; background:#f1f3f5;border-radius:8px;padding:6px 8px;text-decoration:none;color:#333;
+    }
+    .modal h2{margin-top:0}
+
+    /* map iframe */
+    .map-frame{width:100%;height:420px;border:0;border-radius:8px;overflow:hidden}
+
+    /* points list */
+    .points-list{list-style:none;padding:0;margin:0}
+    .points-list li{padding:10px 8px;border-bottom:1px dashed #eee;color:#233}
+
+    /* about/contact sections */
+    section.page{display:none;max-width:1100px;margin:24px auto;padding:0 18px}
+    section.page.active{display:block}
+    .about-card{background:var(--card);padding:18px;border-radius:12px;display:flex;gap:14px;align-items:center;box-shadow:0 12px 28px rgba(2,8,23,0.06)}
+    .about-logo{width:120px;height:120px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--green),#34c37a);color:#fff;font-size:38px}
+    .contact-card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 12px 28px rgba(2,8,23,0.06)}
+
+    /* small utilities */
+    .muted{color:#456;opacity:0.9}
+    .spacer{height:6px}
+
+    /* responsive */
+    @media (max-width:900px){
+      .grid4{grid-template-columns:1fr}
+      .brand-text strong{font-size:1rem}
+      .map-frame{height:320px}
+    }
+
+    /* Accessible focus for links */
+    a:focus{outline:3px solid rgba(11,116,222,0.18);outline-offset:3px}
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <!-- simple SVG leaf logo -->
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M2 12c0-5.522 4.477-10 10-10 0 0-1.5 4.5 2 8 3.5 3.5 8 2 8 2-5.523 5.523-13.75 6.042-20 0 0 0 0 0 0z" fill="#fff" opacity="0.08"/>
+          <path d="M12 2s4 1 6 3c2 2 2 6 2 6s-4 0-7 3c-3 3-3 7-3 7s-1-8-4-11C4 9 2 7 2 7s4-4 10-5z" fill="#fff" opacity="0.18"/>
+          <path d="M6.5 12.5c1.8-3.2 5.2-6.2 9.5-8-1.6 4.5-2.4 8.2-1.2 11.5-3.4-1.6-6.8-2-8.3-3.5z" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <strong>RecyMap</strong>
+        <small>Temiz bir çevre için birlikte</small>
+      </div>
+    </div>
+
+    <nav>
+      <a href="#home" onclick="document.querySelectorAll('section.page').forEach(s=>s.classList.remove('active')); document.getElementById('home').classList.add('active');">Ana Sayfa</a>
+      <a href="#about" onclick="document.querySelectorAll('section.page').forEach(s=>s.classList.remove('active')); document.getElementById('about').classList.add('active');">Hakkımızda</a>
+      <a href="#takım" onclick="document.querySelectorAll('section.page').forEach(s=>s.classList.remove('active')); document.getElementById('takım').classList.add('active');">Takımımız</a>
+     <a href="#soru" onclick="document.querySelectorAll('section.page').forEach(s=>s.classList.remove('active')); document.getElementById('soru').classList.add('active');">Sıkça Sorulan Sorular</a>
+      <a href="#contact" onclick="document.querySelectorAll('section.page').forEach(s=>s.classList.remove('active')); document.getElementById('contact').classList.add('active');">İletişim</a>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- Home (visible by default) -->
+    <section id="home" class="page active">
+      <div class="grid4">
+        <!-- 1: Geri Dönüşüm -->
+        <article class="card">
+          <div class="img" style="background-image:url('https://images.unsplash.com/photo-1581574205435-22b2f4ef2b0d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80')"></div>
+          <div>
+            <h3>Geri Dönüşüm</h3>
+            <p>Geri dönüşümün faydalarını öğrenmek için tıklayın.</p>
+            <a class="btn" href="#modal-recycling">Detayları Göster</a>
+          </div>
+        </article>
+
+        <!-- 2: En Yakın Geri Dönüşüm Noktası -->
+        <article class="card">
+          <div class="img" style="background-image:url('https://images.unsplash.com/photo-1581574205434-0d1f9b0a7f3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80')"></div>
+          <div>
+            <h3>En Yakın Geri Dönüşüm Noktası</h3>
+            <p>En yakın geri dönüşüm noktalarını haritada görmek için tıklayın.</p>
+            <a class="btn" href="#modal-map">Haritayı Aç</a>
+          </div>
+        </article>
+
+        <!-- 3: Birlikte Çalışma -->
+        <article class="card">
+          <div class="img" style="background-image:url('https://images.unsplash.com/photo-1506784983877-45594efa4cbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80')"></div>
+          <div>
+            <h3>Birlikte Çalışma</h3>
+            <p>Topluluk etkinlikleri ve temizlik günleri ile ilgili bilgi.</p>
+            <a class="btn" href="#modal-events">Etkinlikleri Göster</a>
+          </div>
+        </article>
+
+        <!-- 4: Kazanımlar ve Puanlar -->
+        <article class="card">
+          <div class="img" style="background-image:url('https://images.unsplash.com/photo-1601758123927-2b4b1b9f0e96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80')"></div>
+          <div>
+            <h3>Kazanımlar ve Puanlar</h3>
+            <p>Hangi atık ne kadar puan kazandırır öğrenmek için tıklayın.</p>
+            <a class="btn" href="#modal-points">Puanları Gör</a>
+          </div>
+        </article>
+        
+        <!-- Ödüller ve Bakiye -->
+<article class="card">
+  <div class="img" style="background-image:url('https://images.unsplash.com/photo-1573164574390-ba9690e0a2d0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80')"></div>
+  <div>
+    <h3>Ödüller ve Bakiye</h3>
+    <p>Puanlarınızı nasıl ödüllere dönüştürebileceğinizi görün.</p>
+    <a class="btn" href="#modal-rewards" onclick="document.querySelectorAll('section.page').forEach(s=>s.classList.remove('active')); document.getElementById('modal-rewards').classList.add('active');">Ödülleri Göster</a>
+
+        <!-- Robot Çöpçüler -->
+<article class="card">
+  <div class="img" style="background-image:url('https://images.unsplash.com/photo-1549924231-f129b911e442?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80')"></div>
+  <div>
+    <h3>Robot Çöpçüler</h3>
+    <p>Robot çöpçüler, zor alanlarda çevre temizliğini hızlandırır ve sürdürülebilirliğe katkı sağlar.</p>
+    <a class="btn" href="#modal-robots" onclick="document.querySelectorAll('section.page').forEach(s=>s.classList.remove('active')); document.getElementById('modal-robots').classList.add('active');">Detayları Göster</a>
+  </div> 
+
+</article>
+
+
+</article>
+
+</article>
+
+      </div>
+      <!-- Bize Katıl banner -->
+      <div class="join" style="margin-top:18px">
+        <div>
+          <div class="cta">Bize katıl! Etkinliklerden ve ödüllerden haberdar olun.</div>
+          <div class="spacer"></div>
+          <div class="muted">Ad, soyad ve e-posta ile kaydolun — size bilgi maili gönderelim.</div>
+        </div>
+        <div>
+          <!-- Open join modal -->
+          <a class="join-btn" href="#modal-join">Bize Katıl</a>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- About -->
+    <section id="about" class="page">
+      <div class="about-card" role="article">
+        <div class="about-logo">R</div>
+        <div>
+          <h2>Biz kimiz?</h2>
+          <p>RecyMap, çevre kirliliğini azaltmak, toplulukları harekete geçirmek ve sürdürülebilir geri dönüşüm alışkanlıklarını teşvik etmek için kurulmuş bir girişimdir. Kullanıcı geri bildirimleri ve saha tespitleriyle kirli alanları işaretleyip, robotik temizlik çözümleriyle bölge temizliği sağlanmasını hedefliyoruz.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="page">
+      <div class="contact-card">
+        <h2>İletişim</h2>
+        <p>Telefon: <strong>+90 5xx xxx xx xx</strong></p>
+        <p>E-posta: <strong>hhyusraa@gmail.com</strong></p>
+      </div>
+    </section>
+
+    <section id="takım" class="page">
+  <div class="team-card">
+    <h2>Takımımız</h2>
+    <p>Bu projenin kurucusu <strong>Yüsra Yetkin</strong>’dir.</p>
+  </div>
+</section>
+<section id="soru" class="page">
+  <h2>Sıkça Sorulan Sorular</h2>
+  <div class="faq-item">
+    <button class="faq-question" aria-expanded="false" aria-controls="faq1">Geri dönüşüm nedir?</button>
+    <div id="faq1" class="faq-answer" hidden>
+      <p>Atık malzemelerin tekrar kullanılmak üzere işlenmesi sürecidir.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" aria-expanded="false" aria-controls="faq2">Neden geri dönüşüm yapmalıyız?</button>
+    <div id="faq2" class="faq-answer" hidden>
+      <p>Doğal kaynakları korur, enerji tasarrufu sağlar ve çevreyi temiz tutar.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" aria-expanded="false" aria-controls="faq3">Hangi malzemeler geri dönüştürülebilir?</button>
+    <div id="faq3" class="faq-answer" hidden>
+      <p>Plastik, cam, kağıt, metal gibi birçok malzeme geri dönüştürülebilir.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" aria-expanded="false" aria-controls="faq4">Geri dönüşüm noktalarını nasıl bulabilirim?</button>
+    <div id="faq4" class="faq-answer" hidden>
+      <p>“En Yakın Geri Dönüşüm Noktası” bölümündeki harita sayesinde.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" aria-expanded="false" aria-controls="faq5">Topluluk etkinliklerine nasıl katılırım?</button>
+    <div id="faq5" class="faq-answer" hidden>
+      <p>“Bize Katıl” butonundan kayıt olup etkinliklerden haberdar olabilirsiniz.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" aria-expanded="false" aria-controls="faq6">Puan sistemi nasıl çalışıyor?</button>
+    <div id="faq6" class="faq-answer" hidden>
+      <p>Topladığınız atık türüne göre puan kazanıp ödüllere ulaşabilirsiniz.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" aria-expanded="false" aria-controls="faq7">Geri dönüşüm neden önemli?</button>
+    <div id="faq7" class="faq-answer" hidden>
+      <p>Çevre kirliliğini azaltır, enerji ve kaynak tasarrufu sağlar.</p>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" aria-expanded="false" aria-controls="faq8">Proje hakkında nasıl daha fazla bilgi alabilirim?</button>
+    <div id="faq8" class="faq-answer" hidden>
+      <p>Hakkımızda bölümünde detaylı bilgi bulabilir ya da iletişime geçebilirsiniz.</p>
+    </div>
+  </div>
+</section>
+
+
+  </main>
+
+  <footer>© RecyMap — Toplulukla temiz çevre.</footer>
+
+  <!-- CSS-only modals using :target -->
+
+  <!-- Recycling modal -->
+  <div id="modal-recycling" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <a class="close" href="#home" aria-label="kapat">Kapat ✕</a>
+      <h2>Geri Dönüşümün Faydaları</h2>
+      <p>Geri dönüşüm doğal kaynakların korunmasına yardımcı olur, enerji tasarrufu sağlar, atık miktarını azaltır ve ekonomik değer yaratır. Doğru ayrıştırma ile atıklar tekrar kullanılarak çevre ve ekonomi desteklenir.</p>
+      <p class="muted">Bu bilgilendirme demo amaçlıdır.</p>
+    </div>
+  </div>
+
+  <!-- Map modal -->
+  <div id="modal-map" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <a class="close" href="#home" aria-label="kapat">Kapat ✕</a>
+      <h2>En Yakın Geri Dönüşüm Noktaları</h2>
+      <!-- iframe ile genel arama (kullanıcı tarayıcısında konum izni olmadan 'near me' tam vermez, yine de bir arama sunar) -->
+      <iframe class="map-frame" src="https://www.google.com/maps?q=recycling+center+near+me&output=embed" title="Geri Dönüşüm Haritası"></iframe>
+      <p class="muted">Harita örnektir. Gerçek uygulamada kullanıcı konumuna göre dinamik merkez gösterimi yapılacaktır.</p>
+    </div>
+  </div>
+
+  <!-- Events modal -->
+  <div id="modal-events" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <a class="close" href="#home" aria-label="kapat">Kapat ✕</a>
+      <h2>Etkinliklerimiz</h2>
+      <p>Topluluk temizlikleri ve geri dönüşüm farkındalığı etkinlikleri düzenliyoruz. Bir sonraki büyük etkinliğimiz:</p>
+      <ul>
+        <li><strong>20 Eylül</strong> — Temizlik Günü (Buluşma: 09:30, şehir meydanı)</li>
+      </ul>
+    </div>
+  </div> <!-- Rewards modal -->
+<div id="modal-rewards" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <a class="close" href="#home" aria-label="kapat">Kapat ✕</a>
+    <h2>Ödüller ve Puan Bakiye</h2>
+    <p>Puanlarınızı aşağıdaki ödüllerle değiştirebilirsiniz:</p>
+    <ul class="points-list" style="list-style:none; padding:0;">
+      <li style="display:flex; align-items:center; margin-bottom:12px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/2913/2913462.png" alt="Kahve" style="width:40px; height:40px; margin-right:10px;">
+        100 puan — 1 Adet Kahve
+      </li>
+      <li style="display:flex; align-items:center; margin-bottom:12px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/2913/2913459.png" alt="Bez Çanta" style="width:40px; height:40px; margin-right:10px;">
+        200 puan — Bez Çanta
+      </li>
+      <li style="display:flex; align-items:center; margin-bottom:12px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/906/906334.png" alt="Bisiklet Kaskı" style="width:40px; height:40px; margin-right:10px;">
+        500 puan — Bisiklet Kaskı
+      </li>
+      <li style="display:flex; align-items:center; margin-bottom:12px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/2913/2913468.png" alt="Hediye Kartı" style="width:40px; height:40px; margin-right:10px;">
+        1000 puan — Hediye Kartı (50 TL)
+      </li>
+    </ul>
+    <p class="muted">Ödüller ve puanlar örnek amaçlıdır.</p>
+  </div>
+</div>
+  <!-- Points modal -->
+  <div id="modal-points" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <a class="close" href="#home" aria-label="kapat">Kapat ✕</a>
+      <h2>Puan Tablosu</h2>
+      <p>Aşağıdaki örnek puan tablosu demo amaçlıdır:</p>
+      <ul class="points-list">
+        <li>Plastik şişe (1 adet) — 5 puan</li>
+        <li>Cam şişe (1 adet) — 6 puan</li>
+        <li>Kağıt (1 kg) — 8 puan</li>
+        <li>Metal kutu (1 adet) — 7 puan</li>
+      </ul>
+  <!-- Join modal (form uses mailto so mail client açılır) -->
+  <div id="modal-join" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <a class="close" href="#home" aria-label="kapat">Kapat ✕</a>
+      <h2>Bize Katıl</h2>
+      <p>Ad, soyad ve e-posta girin. Gönder tuşuna bastığınızda e-posta istemciniz açılıp <strong>hhyusraa@gmail.com</strong> adresine mail oluşturacaktır.</p>
+      <form action="mailto:hhyusraa@gmail.com" method="post" enctype="text/plain">
+        <label>Ad ve Soyad<br>
+          <input name="AdSoyad" type="text" required style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:6px">
+        </label>
+        <div style="height:8px"></div>
+        <label>E-posta<br>
+          <input name="Eposta" type="email" required style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:6px">
+        </label>
+        <div style="height:12px"></div>
+        <div style="text-align:right">
+          <button type="submit" class="btn">Yolla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<script>
+  document.querySelectorAll('.faq-question').forEach(button => {
+    button.addEventListener('click', () => {
+      const answer = document.getElementById(button.getAttribute('aria-controls'));
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', !expanded);
+      if (!expanded) {
+        answer.removeAttribute('hidden');
+      } else {
+        answer.setAttribute('hidden', '');
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
+
+
+
